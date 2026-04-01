@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Instructors{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>🧑‍🏫 Instructors</h1>
+    <a href="{{ url_for('add_instructor') }}" class="btn btn-primary">+ Add Instructor</a>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Specialization</th>
+          <th>Organization</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in instructors %}
+        <tr>
+          <td>{{ i.InstructorID }}</td>
+          <td>{{ i.Name }}</td>
+          <td>{{ i.Specialization }}</td>
+          <td>{{ i.Organization }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">No instructors found. Add one!</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

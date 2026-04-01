@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Assign Farmer to Training{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>📋 Assign Farmer to Training</h1>
+    <a href="{{ url_for('farmer_training') }}" class="btn btn-outline">← Back</a>
+  </div>
+
+  <div class="form-card" style="max-width:640px;">
+    <form method="POST" id="assignForm">
+
+      <!-- Step 1: Farmer -->
+      <div class="form-group">
+        <label for="farmer_id">Step 1 — Select Farmer</label>
+        <select id="farmer_id" name="farmer_id" required>
+          <option value="">-- Choose a Farmer --</option>
+          {% for f in farmers %}
+          <option value="{{ f.FarmerID }}">{{ f.Name }} ({{ f.Village }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Step 2: Pick a date -->
+      <div class="form-group">
+        <label for="session_date">Step 2 — Pick a Training Date</label>
+        <input type="date" id="session_date" name="session_date">
+        <small class="hint">Only dates with available sessions are selectable.</small>
+      </div>
+
+      <!-- Step 3: Session dropdown (filtered by date) -->
+      <div class="form-group" id="sessionGroup" style="display:none;">
+        <label for="training_id">Step 3 — Select Session</label>
+        <select id="training_id" name="training_id" required>
+          <option value="">-- Sessions on this date --</option>
+        </select>
+      </div>
+
+      <!-- Session preview card -->
+      <div id="sessionPreview" class="session-preview" style="display:none;">
+        <div class="preview-row"><span class="preview-label">🌱 Crop</span><span id="prev-crop"></span></div>
+        <div class="preview-row"><span class="preview-label">📍 Location</span><span id="prev-loc"></span></div>
+        <div class="preview-row"><span class="preview-label">🧑‍🏫 Instructor</span><span id="prev-inst"></span></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Assign Farmer →</button>
+    </form>
+  </div>
+</div>
+
+<!-- Pass sessions data to JS -->
+<script>
+  // All training sessions from the server
+  const sessions = {{ sessions | tojson }};
+
+  // Build a set of valid date strings for the date input
+  const validDates = new Set(sessions.map(s => s.Date));
+
+  const dateInput     = document.getElementById("session_date");
+  const sessionGroup  = document.getElementById("sessionGroup");
+  const sessionSelect = document.getElementById("training_id");
+  const preview       = document.getElementById("sessionPreview");
+  const submitBtn     = document.getElementById("submitBtn");
+
+  // ── Highlight only valid dates via min/max and datalist ──
+  // Build a datalist so browsers can suggest valid dates
+  const dl = document.createElement("datalist");
+  dl.id = "valid-dates";
+  validDates.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = d;
+    dl.appendChild(opt);
+  });
+  document.body.appendChild(dl);
+  dateInput.setAttribute("list", "valid-dates");
+
+  // Set min/max to the earliest and latest session date
+  const sortedDates = [...validDates].sort();
+  if (sortedDates.length) {
+    dateInput.min = sortedDates[0];
+    dateInput.max = sortedDates[sortedDates.length - 1];
+  }
+
+  // ── When a date is chosen, filter the session dropdown ──
+  dateInput.addEventListener("change", function () {
+    const chosen = this.value;
+
+    // Reset
+    sessionSelect.innerHTML = '<option value="">-- Sessions on this date --</option>';
+    preview.style.display   = "none";
+    submitBtn.disabled      = true;
+
+    if (!chosen || !validDates.has(chosen)) {
+      sessionGroup.style.display = "none";
+      if (chosen) {
+        dateInput.style.borderColor = "#e53e3e";
+        dateInput.title = "No training sessions on this date. Please pick a highlighted date.";
+      }
+      return;
+    }
+
+    dateInput.style.borderColor = "";
+    dateInput.title = "";
+
+    // Filter sessions matching the chosen date
+    const matched = sessions.filter(s => s.Date === chosen);
+    matched.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value       = s.TrainingID;
+      opt.textContent = `${s.CropName} — ${s.Location}`;
+      opt.dataset.crop     = s.CropName;
+      opt.dataset.location = s.Location;
+      opt.dataset.inst     = s.InstructorName;
+      sessionSelect.appendChild(opt);
+    });
+
+    sessionGroup.style.display = "block";
+
+    // Auto-select if only one session on that date
+    if (matched.length === 1) {
+      sessionSelect.selectedIndex = 1;
+      sessionSelect.dispatchEvent(new Event("change"));
+    }
+  });
+
+  // ── When session is chosen, show preview ──
+  sessionSelect.addEventListener("change", function () {
+    const selected = this.options[this.selectedIndex];
+    if (!selected.value) {
+      preview.style.display = "none";
+      submitBtn.disabled    = true;
+      return;
+    }
+    document.getElementById("prev-crop").textContent = selected.dataset.crop;
+    document.getElementById("prev-loc").textContent  = selected.dataset.location;
+    document.getElementById("prev-inst").textContent = selected.dataset.inst;
+    preview.style.display = "flex";
+    submitBtn.disabled    = false;
+  });
+</script>
+
+<style>
+  .hint {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 0.3rem;
+  }
+  .session-preview {
+    background: #f0f5ea;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .preview-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+  .preview-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 110px;
+    font-size: 0.82rem;
+  }
+  #submitBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  input[type="date"] {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="date"]:focus { border-color: var(--green-light); }
+</style>
+{% endblock %}
