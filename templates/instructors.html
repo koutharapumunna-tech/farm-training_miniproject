@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Instructors{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>🧑‍🏫 Instructors</h1>
+    <a href="{{ url_for('add_instructor') }}" class="btn btn-primary">+ Add Instructor</a>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Specialization</th>
+          <th>Organization</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in instructors %}
+        <tr>
+          <td>{{ i.InstructorID }}</td>
+          <td>{{ i.Name }}</td>
+          <td>{{ i.Specialization }}</td>
+          <td>{{ i.Organization }}</td>
+          <td>
+            <form action="{{ url_for('delete_instructor', instructor_id=i.InstructorID) }}" method="post" style="display:inline">
+              <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this instructor?');">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">No instructors found. Add one!</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

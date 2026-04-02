@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Add Crop{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>🌱 Add Crop</h1>
+    <a href="{{ url_for('crops') }}" class="btn btn-outline">← Back</a>
+  </div>
+
+  <div class="form-card">
+    <form method="POST">
+      <div class="form-group">
+        <label for="crop_name">Crop Name</label>
+        <input type="text" id="crop_name" name="crop_name" placeholder="e.g. Rice" required>
+      </div>
+      <div class="form-group">
+        <label for="season">Season</label>
+        <select id="season" name="season" required>
+          <option value="">-- Select Season --</option>
+          <option value="Kharif">Kharif</option>
+          <option value="Rabi">Rabi</option>
+          <option value="Zaid">Zaid</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Save Crop</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
